@@ -21,6 +21,12 @@ import { getMaxLengthText } from "../../utils/number";
 import BN from "bn.js";
 import {BN_ZERO} from "@polkadot/util";
 import { formatBalance } from "../../utils/number";
+import { KeyringOptions } from "@polkadot/keyring/types";
+import { Sdk } from '@unique-nft/sdk/full';
+import { UniqueFungibleFactory } from "@unique-nft/solidity-interfaces"
+import { Address } from "@unique-nft/utils"
+import type { Signer } from '@polkadot/types/types';
+
 
 export interface Props extends ThemeProps {
   senderAccount: Account;
@@ -34,6 +40,7 @@ const modalId = TRANSACTION_MODAL;
 function Component ({ className, senderAccount, evmProvider, substrateProvider }: Props) {
   const [{ wallet},] = useConnectWallet();
   const [{ chains }] = useSetChain();
+
   const [loading, setLoading] = useState(false);
   const [ validateTo, setValidateTo ] = useState(false);
   const [ validateValue, setValidateValue ] = useState(false);
@@ -232,16 +239,32 @@ function Component ({ className, senderAccount, evmProvider, substrateProvider }
 
     try{
       const {namespace: namespace_, id: chainId } = wallet.chains[0]
-      const chainInfo = chains.find(({id, namespace}) => id === chainId && namespace === namespace_);
-      if(!chainInfo) return;
 
-      const amount = getOutputValuesFromString(value, chainInfo.decimal || 18);
+      const amount = getOutputValuesFromString(value, 18);
 
       if(wallet?.type === "evm"){
-        await evmProvider?.sendTransaction(senderAccount.address, to, amount )
-        evmProvider?.transactionState.on('transaction-success', (blockHash: string) => blockHash !== '' && onCloseModal())
-      }else{
+        console.log(senderAccount.address, to, amount,evmProvider, 'senderAccount.address, to, amount')
+        try {
+          // await evmProvider?.sendTransaction(senderAccount.address, to, amount )
+          // evmProvider?.transactionState.on('transaction-success', (blockHash: string) => blockHash !== '' && onCloseModal())
+          const signer = evmProvider?.getSigner(senderAccount.address);
 
+          if (!signer) return;
+
+          const from = Address.extract.ethCrossAccountId(senderAccount.address);
+          const reciever = Address.extract.ethCrossAccountId(to);
+          const uniqueFungible = await UniqueFungibleFactory(0, signer);
+          const amountRaw = BigInt(amount);
+    
+          console.log(amountRaw, amount)
+          await (await uniqueFungible.transferFromCross(from, reciever, amountRaw, { from: senderAccount.address })).wait();
+
+        } catch(e) {
+          console.log(e)
+        }
+
+      }else{
+//Promise<Signer>
         const getSigner = async ()=>{
           const provider = wallet.provider as SubstrateProvider;
           if(wallet.label === 'Ledger') {
@@ -261,9 +284,20 @@ function Component ({ className, senderAccount, evmProvider, substrateProvider }
           );
         }
 
-        await substrateProvider?.isReady();
-        await getSigner();
-        substrateProvider?.transactionState.on('transaction-success', (blockHash: string) => blockHash !== '' && onCloseModal())
+        // await substrateProvider?.isReady();
+        let signer = await getSigner();
+        // substrateProvider?.transactionState.on('transaction-success', (blockHash: string) => blockHash !== '' && onCloseModal())
+
+        //@ts-ignore
+        const uniqueSdk = new Sdk({ baseUrl: 'https://rest.unique.network/opal/v1', signer } );
+
+        uniqueSdk.balance.transfer.submitWaitResult(
+          {
+            address: senderAccount.address,
+            destination: to,
+            amount: +amount
+          });
+
       }
       setLoading(false)
     }catch (e) {}
@@ -388,7 +422,7 @@ function Component ({ className, senderAccount, evmProvider, substrateProvider }
                       <span className='__label-balance-transferable'>Sender available balance:</span>
                       {
                         availableBalance && onReadyFreeBalance?
-                          <Number
+                          <Number      
                             decimal={availableBalance.decimals}
                             decimalColor={token.colorTextTertiary}
                             intColor={token.colorTextTertiary}

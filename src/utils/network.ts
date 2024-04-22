@@ -101,6 +101,6 @@ export const NetworkInfo : Record<string, NetworkItemType> = {
     slug: 'opal',
     namespace: 'substrate',
     name: 'OPAL by UNIQUE',
-    wsProvider: 'wss://1rpc.io/ksm'
+    wsProvider: 'wss://ws-opal.unique.network'
   }
 }

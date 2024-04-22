@@ -51,7 +51,7 @@ function Component ({ visible, className }: Props): React.ReactElement<Props> {
         try {
           await set({ chainId: network.id, chainNamespace: network.namespace })
         }catch (e) {
-          console.log(e)
+          console.log(e, 'ERROR_DURING_CONNECT')
         }
       }
     }

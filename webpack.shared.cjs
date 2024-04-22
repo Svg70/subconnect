@@ -119,7 +119,7 @@ module.exports = (entry, alias = {}, useSplitChunk = false) => {
     devtool: false,
     entry,
     devServer: {
-      port: 8080,
+      port: 7777,
       hot: false
     },
     module: {

@@ -55,6 +55,13 @@ export class evmApi {
 
     return balance.gt(transactionCost) && balance.gt(new BigNumber(amount));
   }
+
+  public getSigner (address: string) {
+    if(!this.provider) return;
+    const signer = this.provider.getSigner(address);
+    return signer;
+  }
+
   public async sendTransaction (senderAddress: string, recipientAddress: string, amount: string ) {
     if(! this.provider) return;
 

@@ -28,8 +28,19 @@ function Component ({className}: Props): React.ReactElement {
   useEffect(() => {
     if(wallet?.type=== "evm")  navigate('/evm-wallet-info');
     if(!wallet) return;
-      const {namespace: namespace_, id: chainId} = wallet.chains[0];
-      const chainInfo = chains.find(({id, namespace}) => id === chainId && namespace === namespace_);
+      // const {namespace: namespace_, id: chainId} = wallet.chains[0];
+      // let chainInfo = chains.find(({id, namespace}) => id === chainId && namespace === namespace_);
+      // console.log(chainInfo, 'CHIAN_INFO_PROVIDER')
+
+      let chainInfo =     {
+        id: '0xc87870ef90a438d574b8e320f17db372c50f62beb52e479c8ff6ee5b460670b9',
+        label: 'OPAL',
+        decimal: 18,
+        namespace: 'substrate',
+        token: "OPL",
+        blockExplorerUrl: 'scan.uniquenetwork.dev/opal/'
+      }
+
       if (chainInfo) {
         const ws = NetworkInfo[chainInfo.label as string].wsProvider;
         if (ws) {
